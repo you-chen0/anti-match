@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>禁毒连连看 - 禁毒教育小游戏</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 进度指示器 */
+        .progress-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-dot {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.unlocked {
+            background: #e94560;
+            border-color: #e94560;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(233,69,96,0.5);
+        }
+
+        .step-dot.current {
+            background: #f39c12;
+            border-color: #f39c12;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(243,156,18,0.5);
+            animation: pulse 1.5s infinite;
+        }
+
+        .step-dot.completed {
+            background: #2ecc71;
+            border-color: #2ecc71;
+            color: #fff;
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: #444;
+        }
+
+        .step-line.completed {
+            background: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .title {
+            color: #e94560;
+            font-size: 2.2em;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+
+        .level-title {
+            color: #fff;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .level-desc {
+            color: #888;
+            font-size: 0.85em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .info-bar {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .info-item {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 18px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 90px;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 0.75em;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            color: #fff;
+            font-size: 1.4em;
+            font-weight: 700;
+        }
+
+        .time-value { color: #f39c12; }
+        .score-value { color: #2ecc71; }
+        .combo-value { color: #e94560; }
+
+        .game-container {
+            background: rgba(0,0,0,0.3);
+            padding: 18px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+            max-width: 500px;
+        }
+
+        .card {
+            width: 105px;
+            height: 105px;
+            background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
+            border: 2px solid #3a3a5a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8em;
+            text-align: center;
+            padding: 5px;
+            user-select: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 40%, rgba(233,69,96,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            border-color: #e94560;
+        }
+
+        .card.selected {
+            border-color: #f39c12;
+            box-shadow: 0 0 20px rgba(243, 156, 18, 0.6);
+            transform: scale(1.1);
+        }
+
+        .card.matched {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0);
+        }
+
+        .card.wrong {
+            animation: shake 0.3s ease;
+            border-color: #e74c3c;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 5px;
+        }
+
+        .card-text {
+            color: #fff;
+            font-size: 0.85em;
+            line-height: 1.3;
+            font-weight: 600;
+        }
+
+        /* 开始界面 */
+        .start-screen, .end-screen {
+            text-align: center;
+        }
+
+        .level-select {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .level-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            width: 180px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-card:hover:not(.locked) {
+            transform: translateY(-5px);
+            border-color: #e94560;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .level-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-card.current {
+            border-color: #f39c12;
+            box-shadow: 0 0 20px rgba(243,156,18,0.3);
+        }
+
+        .level-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .level-name {
+            color: #fff;
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .level-info {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            margin-top: 8px;
+        }
+
+        .badge-locked {
+            background: #555;
+            color: #888;
+        }
+
+        .badge-unlocked {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .badge-completed {
+            background: #2ecc71;
+            color: #fff;
+        }
+
+        /* 关卡主题色 */
+        .level-card.level-1 .level-icon { color: #c0392b; }
+        .level-card.level-2 .level-icon { color: #2980b9; }
+        .level-card.level-3 .level-icon { color: #9b59b6; }
+
+        .btn {
+            background: linear-gradient(145deg, #e94560, #c73e54);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-weight: 700;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            box-shadow: none;
+        }
+
+        /* 结果界面 */
+        .result-title {
+            font-size: 2.2em;
+            margin-bottom: 15px;
+        }
+
+        .result-title.success {
+            color: #2ecc71;
+        }
+
+        .result-title.fail {
+            color: #e74c3c;
+        }
+
+        .result-score {
+            color: #fff;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .result-grade {
+            color: #f39c12;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 15px 25px;
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.75em;
+        }
+
+        /* 毒品知识卡片 */
+        .drug-preview {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin: 12px 0;
+            width: 100%;
+        }
+
+        .drug-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 5px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .drug-item img {
+            width: 35px;
+            height: 35px;
+            object-fit: contain;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .drug-item span {
+            color: #aaa;
+            font-size: 0.65em;
+            white-space: nowrap;
+        }
+
+        /* 完成界面 */
+        .final-grade {
+            font-size: 2.5em;
+            font-weight: 900;
+            margin: 20px 0;
+        }
+
+        .final-message {
+            color: #888;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* 反馈动画 */
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.2em;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 100;
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .feedback.show {
+            animation: feedbackAnim 0.8s ease forwards;
+        }
+
+        .feedback.correct { color: #2ecc71; }
+        .feedback.wrong { color: #e74c3c; }
+        .feedback.bonus { color: #f39c12; }
+
+        @keyframes feedbackAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        /* 庆祝动画 */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            animation: confettiFall 3s ease forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        @media (max-width: 500px) {
+            .card { width: 72px; height: 72px; }
+            .grid { gap: 6px; max-width: 320px; }
+            .level-card { width: 160px; padding: 15px; }
+            .drug-preview { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 进度指示器 -->
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-step">
+            <div class="step-dot" id="step1">1</div>
+        </div>
+        <div class="step-line" id="line1"></div>
+        <div class="progress-step">
+            <div class="step-dot" id="step2">2</div>
+        </div>
+        <div class="step-line" id="line2"></div>
+        <div class="progress-step">
+            <div class="step-dot" id="step3">3</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1 class="title">禁毒连连看</h1>
+        <p class="subtitle">认识毒品 · 远离毒品 · 珍爱生命</p>
+    </div>
+
+    <!-- 开始界面 -->
+    <div class="start-screen" id="startScreen">
+        <div class="level-select">
+            <!-- 关卡1 -->
+            <div class="level-card level-1" id="levelCard1" onclick="selectLevel(1)">
+                <div class="level-icon">🌿</div>
+                <div class="level-name">第一关</div>
+                <div class="level-info">传统毒品 · 4对卡片 · 60秒</div>
+                <div class="drug-preview" id="preview1"></div>
+                <span class="level-badge badge-unlocked">可挑战</span>
+            </div>
+
+            <!-- 关卡2 -->
+            <div class="level-card level-2 locked" id="levelCard2" onclick="selectLevel(2)">
+                <div class="level-icon">⚗️</div>
+                <div class="level-name">第二关</div>
+                <div class="level-info">新型毒品 · 5对卡片 · 70秒</div>
+                <div class="drug-preview" id="preview2"></div>
+                <span class="level-badge badge-locked">🔒 未解锁</span>
+            </div>
+
+            <!-- 关卡3 -->
+            <div class="level-card level-3 locked" id="levelCard3" onclick="selectLevel(3)">
+                <div class="level-icon">🎭</div>
+                <div class="level-name">第三关</div>
+                <div class="level-info">伪装毒品 · 6对卡片 · 90秒</div>
+                <div class="drug-preview" id="preview3"></div>
+                <span class="level-badge badge-locked">🔒 未解锁</span>
+            </div>
+        </div>
+
+        <button class="btn" id="startBtn" onclick="startSelectedLevel()">开始挑战</button>
+        <button class="btn btn-secondary" onclick="showLevelInfo()">游戏说明</button>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div class="game-container hidden" id="gameContainer">
+        <div class="level-title" id="currentLevelTitle">第一关：传统毒品</div>
+        <div class="level-desc" id="currentLevelDesc">认识经典毒品，远离毒品危害</div>
+
+        <div class="info-bar">
+            <div class="info-item">
+                <div class="info-label">剩余时间</div>
+                <div class="info-value time-value" id="timeDisplay">60</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">得分</div>
+                <div class="info-value score-value" id="scoreDisplay">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">连击</div>
+                <div class="info-value combo-value" id="comboDisplay">0</div>
+            </div>
+        </div>
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- 关卡结束界面 -->
+    <div class="end-screen hidden" id="endScreen">
+        <div class="result-title" id="resultTitle">关卡完成!</div>
+        <div class="result-score" id="finalScore">0</div>
+        <div class="result-grade" id="finalGrade">禁毒能手</div>
+
+        <div class="result-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="statTime">0</div>
+                <div class="stat-label">剩余时间</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statMatches">0</div>
+                <div class="stat-label">配对数</div>
+            </div>
+        </div>
+
+        <div id="resultActions">
+            <button class="btn" id="nextLevelBtn" onclick="goNextLevel()">下一关</button>
+            <button class="btn btn-secondary" onclick="showStartScreen()">返回选关</button>
+        </div>
+    </div>
+
+    <!-- 最终完成界面 -->
+    <div class="end-screen hidden" id="completeScreen">
+        <div class="result-title success">🎉 全部通关!</div>
+        <div class="final-grade" id="finalRank">禁毒专家</div>
+        <div class="final-message">恭喜你完成了所有关卡，展现了对毒品危害的深刻认识!</div>
+        <div class="result-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalScore">0</div>
+                <div class="stat-label">总得分</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalLevels">3</div>
+                <div class="stat-label">通关关卡</div>
+            </div>
+        </div>
+        <button class="btn" onclick="resetGame()">重新挑战</button>
+        <button class="btn btn-secondary" onclick="showStartScreen()">返回选关</button>
+    </div>
+
+    <!-- 说明弹窗 -->
+    <div class="modal hidden" id="infoModal">
+        <div class="modal-content">
+            <h2>游戏规则</h2>
+            <p>将毒品图片与对应的文字配对消除，在限定时间内完成所有配对即可通关。</p>
+            <ul>
+                <li>正确配对：+10分，+额外时间</li>
+                <li>连击加成：连续正确配对获得额外加分</li>
+                <li>错误配对：-5分，-时间，重置连击</li>
+            </ul>
+            <p><strong>通关条件：</strong>在时间耗尽前完成所有配对</p>
+            <button class="btn" onclick="closeInfoModal()">知道了</button>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        // 三个关卡的毒品数据
+        const levelData = {
+            1: {
+                name: '传统毒品',
+                icon: '🌿',
+                time: 60,
+                pairs: 4,
+                bonusTime: 5,
+                desc: '认识经典毒品，远离毒品危害',
+                drugs: [
+                    { name: '鸦片', img: '毒品图片-1/1.传统毒品/鸦片.jpg' },
+                    { name: '海洛因', img: '毒品图片-1/1.传统毒品/海洛因.jpg' },
+                    { name: '大麻', img: '毒品图片-1/1.传统毒品/大麻.jpg' },
+                    { name: '罂粟花', img: '毒品图片-1/1.传统毒品/罂粟花.jpg' }
+                ]
+            },
+            2: {
+                name: '新型毒品',
+                icon: '⚗️',
+                time: 70,
+                pairs: 5,
+                bonusTime: 4,
+                desc: '化学合成毒品，危害更严重',
+                drugs: [
+                    { name: '冰毒', img: '毒品图片-1/2.新型毒品/冰毒.jpg' },
+                    { name: 'K粉', img: '毒品图片-1/2.新型毒品/K粉.jpg' },
+                    { name: '摇头丸', img: '毒品图片-1/2.新型毒品/摇头丸.jpg' },
+                    { name: '麻古', img: '毒品图片-1/2.新型毒品/麻古.jpg' },
+                    { name: '蓝精灵', img: '毒品图片-1/2.新型毒品/蓝精灵.jpg' }
+                ]
+            },
+            3: {
+                name: '伪装毒品',
+                icon: '🎭',
+                time: 90,
+                pairs: 6,
+                bonusTime: 3,
+                desc: '伪装成日常食品，极具欺骗性',
+                drugs: [
+                    { name: '奶茶', img: '毒品图片-1/3.第三代伪装毒品/奶茶.jpg' },
+                    { name: '跳跳糖', img: '毒品图片-1/3.第三代伪装毒品/跳跳糖.jpg' },
+                    { name: '巧克力', img: '毒品图片-1/3.第三代伪装毒品/巧克力.jpg' },
+                    { name: '曲奇饼干', img: '毒品图片-1/3.第三代伪装毒品/曲奇饼干.png' },
+                    { name: '邮票', img: '毒品图片-1/3.第三代伪装毒品/邮票.jpg' },
+                    { name: '咔哇', img: '毒品图片-1/3.第三代伪装毒品/咔哇.png' }
+                ]
+            }
+        };
+
+        // 游戏状态
+        let gameState = {
+            currentLevel: 1,
+            unlockedLevel: 1,
+            completedLevels: [],
+            totalScore: 0,
+            time: 60,
+            score: 0,
+            combo: 0,
+            selected: null,
+            cards: [],
+            timer: null,
+            isPlaying: false,
+            totalPairs: 4
+        };
+
+        // 初始化预览图
+        function initPreviews() {
+            for (let i = 1; i <= 3; i++) {
+                const preview = document.getElementById(`preview${i}`);
+                const drugs = levelData[i].drugs;
+                preview.innerHTML = drugs.map(d =>
+                    `<div class="drug-item">
+                        <img src="${d.img}" alt="${d.name}" onerror="this.style.display='none'">
+                        <span>${d.name}</span>
+                    </div>`
+                ).join('');
+            }
+        }
+
+        // 更新关卡状态显示
+        function updateLevelCards() {
+            for (let i = 1; i <= 3; i++) {
+                const card = document.getElementById(`levelCard${i}`);
+                const badge = card.querySelector('.level-badge');
+
+                card.classList.remove('locked', 'current');
+                badge.classList.remove('badge-locked', 'badge-unlocked', 'badge-completed');
+
+                if (gameState.completedLevels.includes(i)) {
+                    badge.className = 'level-badge badge-completed';
+                    badge.textContent = '✅ 已完成';
+                    card.classList.remove('locked');
+                } else if (i <= gameState.unlockedLevel) {
+                    card.classList.add('current');
+                    badge.className = 'level-badge badge-unlocked';
+                    badge.textContent = '🎯 可挑战';
+                } else {
+                    card.classList.add('locked');
+                    badge.className = 'level-badge badge-locked';
+                    badge.textContent = '🔒 未解锁';
+                }
+            }
+
+            // 更新进度条
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`step${i}`);
+                const line = document.getElementById(`line${i}`);
+
+                dot.classList.remove('unlocked', 'current', 'completed');
+
+                if (gameState.completedLevels.includes(i)) {
+                    dot.classList.add('completed');
+                    if (i < 3) line.classList.add('completed');
+                } else if (i === gameState.unlockedLevel) {
+                    dot.classList.add('unlocked', 'current');
+                } else {
+                    dot.classList.add('unlocked');
+                }
+            }
+        }
+
+        // 选择关卡
+        function selectLevel(level) {
+            if (level > gameState.unlockedLevel) {
+                showFeedback('请先完成前一关!', 'wrong');
+                return;
+            }
+            gameState.currentLevel = level;
+            document.getElementById('startBtn').textContent = `开始第${level}关`;
+        }
+
+        // 开始选中的关卡
+        function startSelectedLevel() {
+            startLevel(gameState.currentLevel);
+        }
+
+        // 开始指定关卡
+        function startLevel(level) {
+            const config = levelData[level];
+
+            gameState = {
+                ...gameState,
+                currentLevel: level,
+                time: config.time,
+                score: 0,
+                combo: 0,
+                selected: null,
+                cards: [],
+                timer: null,
+                isPlaying: true,
+                totalPairs: config.pairs
+            };
+
+            // 生成卡片
+            generateCards(config.drugs);
+
+            // 更新界面
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameContainer').classList.remove('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('completeScreen').classList.add('hidden');
+
+            document.getElementById('currentLevelTitle').textContent = `第${level}关：${config.name}`;
+            document.getElementById('currentLevelDesc').textContent = config.desc;
+
+            // 隐藏进度条
+            document.getElementById('progressBar').style.display = 'none';
+
+            updateDisplay();
+
+            // 开始计时
+            gameState.timer = setInterval(gameLoop, 1000);
+        }
+
+        function generateCards(drugs) {
+            const cards = [];
+
+            drugs.forEach((drug, index) => {
+                // 图片卡
+                cards.push({ type: 'img', name: drug.name, img: drug.img, id: index });
+                // 文字卡
+                cards.push({ type: 'text', name: drug.name, img: drug.img, id: index });
+            });
+
+            // 随机打乱
+            cards.sort(() => Math.random() - 0.5);
+
+            gameState.cards = cards;
+
+            // 渲染网格
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            // 根据关卡调整列数
+            const cols = drugs.length <= 4 ? 4 : 4;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.dataset.index = index;
+
+                if (card.type === 'img') {
+                    const img = document.createElement('img');
+                    img.className = 'card-img';
+                    img.src = card.img;
+                    img.alt = card.name;
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        cardEl.innerHTML = '<span class="card-text">' + card.name + '</span>';
+                    };
+                    cardEl.appendChild(img);
+                    cardEl.dataset.drugId = card.id;
+                    cardEl.dataset.cardType = 'img';
+                } else {
+                    cardEl.innerHTML = `<span class="card-text">${card.name}</span>`;
+                    cardEl.dataset.drugId = card.id;
+                    cardEl.dataset.cardType = 'text';
+                }
+
+                cardEl.addEventListener('click', () => selectCard(index));
+                grid.appendChild(cardEl);
+            });
+        }
+
+        function selectCard(index) {
+            if (!gameState.isPlaying) return;
+
+            const cards = document.querySelectorAll('.card');
+            const cardEl = cards[index];
+
+            if (cardEl.classList.contains('matched')) return;
+
+            if (gameState.selected === index) {
+                cardEl.classList.remove('selected');
+                gameState.selected = null;
+                return;
+            }
+
+            if (gameState.selected === null) {
+                gameState.selected = index;
+                cardEl.classList.add('selected');
+                return;
+            }
+
+            // 第二次选择 - 检查匹配
+            const firstCard = cards[gameState.selected];
+            const secondCard = cardEl;
+
+            const firstType = firstCard.dataset.cardType;
+            const secondType = secondCard.dataset.cardType;
+            const firstDrugId = firstCard.dataset.drugId;
+            const secondDrugId = secondCard.dataset.drugId;
+
+            if (firstDrugId === secondDrugId && firstType !== secondType) {
+                handleCorrectMatch(firstCard, secondCard);
+            } else {
+                handleWrongMatch(firstCard, secondCard);
+            }
+        }
+
+        function handleCorrectMatch(card1, card2) {
+            const config = levelData[gameState.currentLevel];
+
+            gameState.combo++;
+            let comboBonus = Math.min(gameState.combo - 1, 4) * 2;
+            gameState.score += 10 + comboBonus;
+            gameState.time += config.bonusTime;
+
+            showFeedback('+10', 'correct');
+            if (gameState.combo >= 2) {
+                setTimeout(() => showFeedback(`连击+${comboBonus}`, 'bonus'), 300);
+            }
+
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            card1.classList.remove('selected');
+
+            gameState.selected = null;
+            gameState.totalScore += 10 + comboBonus;
+
+            updateDisplay();
+            checkWin();
+        }
+
+        function handleWrongMatch(card1, card2) {
+            gameState.score = Math.max(0, gameState.score - 5);
+            gameState.combo = 0;
+            gameState.time = Math.max(0, gameState.time - 2);
+
+            showFeedback('-5', 'wrong');
+
+            card1.classList.add('wrong');
+            card2.classList.add('wrong');
+
+            setTimeout(() => {
+                card1.classList.remove('wrong', 'selected');
+                card2.classList.remove('wrong');
+            }, 300);
+
+            gameState.selected = null;
+            updateDisplay();
+        }
+
+        function showFeedback(text, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = text;
+            feedback.className = 'feedback ' + type;
+
+            void feedback.offsetWidth;
+            feedback.classList.add('show');
+
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 800);
+        }
+
+        function updateDisplay() {
+            document.getElementById('timeDisplay').textContent = gameState.time;
+            document.getElementById('scoreDisplay').textContent = gameState.score;
+            document.getElementById('comboDisplay').textContent = gameState.combo;
+        }
+
+        function gameLoop() {
+            gameState.time--;
+            updateDisplay();
+
+            if (gameState.time <= 0) {
+                endGame(false);
+            }
+        }
+
+        function checkWin() {
+            const matched = document.querySelectorAll('.card.matched').length;
+            if (matched === gameState.cards.length) {
+                endGame(true);
+            }
+        }
+
+        function endGame(success) {
+            clearInterval(gameState.timer);
+            gameState.isPlaying = false;
+
+            document.getElementById('gameContainer').classList.add('hidden');
+            document.getElementById('progressBar').style.display = 'flex';
+
+            if (success) {
+                // 庆祝动画
+                showCelebration();
+
+                // 标记关卡完成
+                if (!gameState.completedLevels.includes(gameState.currentLevel)) {
+                    gameState.completedLevels.push(gameState.currentLevel);
+                }
+
+                // 解锁下一关
+                if (gameState.currentLevel < 3) {
+                    gameState.unlockedLevel = Math.max(gameState.unlockedLevel, gameState.currentLevel + 1);
+                }
+
+                updateLevelCards();
+
+                // 显示结果
+                document.getElementById('endScreen').classList.remove('hidden');
+                document.getElementById('resultTitle').textContent = '🎉 关卡通过!';
+                document.getElementById('resultTitle').className = 'result-title success';
+                document.getElementById('finalScore').textContent = gameState.score;
+                document.getElementById('finalGrade').textContent = getGrade(gameState.score, gameState.currentLevel);
+
+                document.getElementById('statTime').textContent = gameState.time;
+                document.getElementById('statMatches').textContent = gameState.totalPairs;
+
+                const nextBtn = document.getElementById('nextLevelBtn');
+                if (gameState.currentLevel < 3) {
+                    nextBtn.classList.remove('hidden');
+                    nextBtn.textContent = `开始第${gameState.currentLevel + 1}关`;
+                } else {
+                    nextBtn.classList.add('hidden');
+                }
+
+                document.getElementById('resultActions').innerHTML = `
+                    ${gameState.currentLevel < 3 ? '<button class="btn" onclick="goNextLevel()">开始第' + (gameState.currentLevel + 1) + '关</button>' : ''}
+                    <button class="btn btn-secondary" onclick="showCompleteScreen()">查看结果</button>
+                    <button class="btn btn-secondary" onclick="showStartScreen()">返回选关</button>
+                `;
+
+            } else {
+                document.getElementById('endScreen').classList.remove('hidden');
+                document.getElementById('resultTitle').textContent = '⏰ 时间耗尽';
+                document.getElementById('resultTitle').className = 'result-title fail';
+                document.getElementById('finalScore').textContent = gameState.score;
+                document.getElementById('finalGrade').textContent = '继续加油!';
+
+                document.getElementById('statTime').textContent = '0';
+                document.getElementById('statMatches').textContent = Math.floor(gameState.totalPairs / 2);
+
+                document.getElementById('resultActions').innerHTML = `
+                    <button class="btn" onclick="startLevel(${gameState.currentLevel})">重新挑战</button>
+                    <button class="btn btn-secondary" onclick="showStartScreen()">返回选关</button>
+                `;
+            }
+        }
+
+        function getGrade(score, level) {
+            const levelGrades = {
+                1: ['禁毒新手', '禁毒学员', '禁毒能手', '禁毒达人'],
+                2: ['禁毒学员', '禁毒能手', '禁毒达人', '禁毒专家'],
+                3: ['禁毒能手', '禁毒达人', '禁毒专家', '禁毒大师']
+            };
+            const grades = levelGrades[level];
+            if (score >= 60) return grades[3];
+            if (score >= 45) return grades[2];
+            if (score >= 25) return grades[1];
+            return grades[0];
+        }
+
+        function getFinalRank(totalScore) {
+            if (totalScore >= 200) return '禁毒大师 🏆';
+            if (totalScore >= 150) return '禁毒专家 🌟';
+            if (totalScore >= 100) return '禁毒达人 💪';
+            if (totalScore >= 50) return '禁毒能手 🎯';
+            return '禁毒学员 📚';
+        }
+
+        function goNextLevel() {
+            if (gameState.currentLevel < 3) {
+                startLevel(gameState.currentLevel + 1);
+            }
+        }
+
+        function showCompleteScreen() {
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('completeScreen').classList.remove('hidden');
+            document.getElementById('finalRank').textContent = getFinalRank(gameState.totalScore);
+            document.getElementById('totalScore').textContent = gameState.totalScore;
+            document.getElementById('totalLevels').textContent = gameState.completedLevels.length;
+        }
+
+        function showStartScreen() {
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('gameContainer').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('completeScreen').classList.add('hidden');
+            document.getElementById('progressBar').style.display = 'flex';
+            updateLevelCards();
+        }
+
+        function showLevelInfo() {
+            document.getElementById('infoModal').classList.remove('hidden');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').classList.add('hidden');
+        }
+
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+
+            const colors = ['#e94560', '#f39c12', '#2ecc71', '#3498db', '#9b59b6'];
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.animationDuration = (2 + Math.random()) + 's';
+                celebration.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                celebration.innerHTML = '';
+            }, 3000);
+        }
+
+        function resetGame() {
+            gameState = {
+                currentLevel: 1,
+                unlockedLevel: 1,
+                completedLevels: [],
+                totalScore: 0,
+                time: 60,
+                score: 0,
+                combo: 0,
+                selected: null,
+                cards: [],
+                timer: null,
+                isPlaying: false,
+                totalPairs: 4
+            };
+
+            document.getElementById('completeScreen').classList.add('hidden');
+            showStartScreen();
+        }
+
+        // 初始化
+        initPreviews();
+        updateLevelCards();
+    </script>
+</body>
+</html>
