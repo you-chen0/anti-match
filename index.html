@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>案件调查档案 · 禁毒连连看</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1319,10 +1319,15 @@ function buildGrid(drugs) {
   var total = cards.length;
   var cols = total <= 8 ? 4 : total <= 20 ? 5 : 6;
   grid.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
-  var sz = {4:'100px',5:'76px',6:'64px'}[cols];
-  var gp = {4:'14px',5:'9px',6:'6px'}[cols];
+  var gapPx = {4:14,5:9,6:6}[cols];
+  var gp = gapPx + 'px';
   var fs = {4:'0.8em',5:'0.66em',6:'0.56em'}[cols];
   grid.style.gap = gp;
+
+  // Responsive card size: fit available width, min 50px
+  var availableW = Math.min(grid.clientWidth || window.innerWidth - 40, 680);
+  var cardSz = Math.max(50, Math.floor((availableW - gapPx * (cols - 1)) / cols));
+  var sz = cardSz + 'px';
 
   cards.forEach(function(c, idx) {
     var el = document.createElement('div');
